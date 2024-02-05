@@ -65,10 +65,10 @@ export class FilesService {
     const qbDeleted = this.repository
       .createQueryBuilder('files')
       .where('userId = :userId', { userId })
-      .andWhere('deleteAt IS NOT null')
       .andWhere('id IN (:...ids)', {
         ids,
-      });
+      })
+      .andWhere('deleteAt IS NOT null');
     const deleted = this.repository.find({
       where: {
         id: In(ids),
@@ -82,10 +82,9 @@ export class FilesService {
         fs.rmSync(path.resolve('uploads', elem.filename));
       });
     });
-    const [soft, hard] = await Promise.all([
-      qb.softDelete().execute(),
-      qbDeleted.delete().execute(),
-    ]);
+    const hard = await qbDeleted.delete().execute();
+    const soft = await qb.softDelete().execute();
+
     return [...soft.raw, ...hard.raw];
   }
 }
